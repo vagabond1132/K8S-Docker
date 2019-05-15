@@ -1,0 +1,121 @@
+#service
+apiVersion: v1
+kind: Service
+metadata:
+  name: inspur-highgodb
+  namespace: kube-system
+  labels:
+    app: inspur-highgodb
+spec:
+  sessionAffinity: ClientIP
+  type: NodePort
+  #externalTrafficPolicy: Local
+  ports:
+  - port: 5866
+    nodePort: 38664
+    targetPort: 5866
+    name: port1
+  selector:
+    app: inspur-highgodb
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:   
+  name: inspur-highgodb-1
+  namespace: kube-system
+spec: 
+  serviceName: "highgo-dbc-service"
+  replicas: 1
+  template: 
+    metadata:
+      labels: 
+        app: inspur-highgodb-rep01
+      annotations:
+        "cni.projectcalico.org/ipAddrs": "[\"172.20.235.204\"]"
+    spec:
+      serviceAccountName: calico-node
+      containers:  
+      - name: highgodb-rep01
+        image: highgo-ns-mips-import-4.0:v0.1
+        imagePullPolicy: IfNotPresent 
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 5866
+          name: tcp-local-1
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 6000m
+            memory: 5000M
+          requests:
+            cpu: 1000m
+            memory: 2048M
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:   
+  name: inspur-highgodb-2
+  namespace: kube-system
+spec: 
+  serviceName: "highgo-dbc-service"
+  replicas: 1
+  template: 
+    metadata:
+      labels: 
+        app: inspur-highgodb-rep02
+      annotations:
+        "cni.projectcalico.org/ipAddrs": "[\"172.20.235.205\"]"
+    spec:
+      serviceAccountName: calico-node
+      containers:  
+      - name: highgodb-rep02
+        image: highgo-ns-mips-import-4.0:v0.1
+        imagePullPolicy: IfNotPresent 
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 5866
+          name: tcp-local-1
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 6000m
+            memory: 5000M
+          requests:
+            cpu: 1000m
+            memory: 2048M
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:   
+  name: inspur-highgodb-3
+  namespace: kube-system
+spec: 
+  serviceName: "highgo-dbc-service"
+  replicas: 1
+  template: 
+    metadata:
+      labels: 
+        app: inspur-highgodb-rep03
+      annotations:
+        "cni.projectcalico.org/ipAddrs": "[\"172.20.235.206\"]"
+    spec:
+      serviceAccountName: calico-node
+      containers:  
+      - name: highgodb-rep03
+        image: highgo-ns-mips-import-4.0:v0.1
+        imagePullPolicy: IfNotPresent 
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 5866
+          name: tcp-local-1
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 6000m
+            memory: 5000M
+          requests:
+            cpu: 1000m
+            memory: 2048M
