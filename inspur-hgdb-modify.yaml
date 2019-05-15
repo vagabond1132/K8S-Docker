@@ -1,0 +1,97 @@
+
+---
+#service
+apiVersion: v1
+kind: Service
+metadata:
+  name: inspur-highgo
+  namespace: highgodb
+  labels:
+    app: inspur-highgo
+spec:
+  sessionAffinity: ClientIP
+  type: NodePort
+  #externalTrafficPolicy: Local
+  ports:
+  - port: 5866
+    nodePort: 38650
+    targetPort: 5866
+    name: port1
+  selector:
+    app: inspur-highgo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: inspur-highgo-internal
+  name: inspur-highgo-internal
+  namespace: highgodb
+spec:
+  clusterIP: None
+  ports:
+  - name: port1
+    port: 5866
+    protocol: TCP
+    targetPort: 5866
+  selector:
+    app: inspur-highgo
+
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:   
+  name: inspur-highgo
+  namespace: highgodb
+spec: 
+  serviceName: "inspur-highgo-internal"
+  replicas: 3
+  template: 
+    metadata:
+      labels: 
+        app: inspur-highgo
+      #annotations:
+      #  "cni.projectcalico.org/ipAddrs": "[\"172.20.140.200\"]"
+    spec:
+      #serviceAccountName: calico-node
+      dnsPolicy: ClusterFirst ##配置DNS;
+      #dnsPolicy: ClusterFirstWithHostNet ##配置DNS;
+      subdomain: inspur-highgo-internal
+      restartPolicy: Always
+      containers:  
+      - name: highgo-rep01
+        image: mips-neokylin-autocom:v3.6 ## 开启rep;
+        #image: mips-neokylin-autocom:v1  ## 未开启rep;
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5866
+          name: port1
+          protocol: TCP
+        env:
+        - name: RepNum 
+          value: "3"
+        - name: REP_MASTER_HOSTNAME
+          value: inspur-highgo-0
+        resources:
+          limits:
+            cpu: 6
+            memory: 5000Mi
+          requests:
+            cpu: 1
+            memory: 500Mi
+        volumeMounts: 
+        - name: data-dir
+          mountPath: /opt/HighGoDB-4.3.4/data
+      volumes:  
+      - name: data-dir
+        hostPath:
+          path: /root/autocom-data
+  #volumeClaimTemplates:
+  #- metadata:
+  #    name: inspur-highgo
+  #  spec:
+  #    accessModes: [ "ReadWriteOnce" ]
+  #    storageClassName: ""
+  #    resources:
+  #      requests:
+  #        storage: 1000Gi
